@@ -109,7 +109,7 @@ static bool RejestrujKlase()
 	WNDCLASSEX wndclassex;
 
 	wndclassex.cbSize = sizeof(WNDCLASSEX);
-	wndclassex.style = CS_HREDRAW | CS_VREDRAW;
+	wndclassex.style = 0;
 	wndclassex.lpfnWndProc = ProceduraOkna;
 	wndclassex.cbClsExtra = 0;
 	wndclassex.cbWndExtra = 0;
