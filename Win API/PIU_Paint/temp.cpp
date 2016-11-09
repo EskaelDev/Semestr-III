@@ -901,7 +901,486 @@ bool SprawdzKolizjeKwadraty(RECT rect, LPARAM lParam) //wylaczy obszar przyborni
 
 
 
+////////////////////////////////////////////////////////////////////PASZKWIL
 
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
+#define COLOURS 24
+#define RECTANGLE_SIZE 30
+#define SQUARE_SIZE 50
+#define FIGURES_LIMIT 20
+#define ANGLE 15
+
+#include <Windows.h>
+#include <deque>
+#include <tchar.h>
+
+using namespace std;
+
+MSG msg;
+TCHAR className[] = TEXT("Simple Class");
+HWND hwnd;
+COLORREF color = RGB(0, 0, 0);
+RECT drawPanelRect;
+
+unsigned int pixelSize = 10;
+bool paintingLeft = false, paintingRight = false;
+bool freeMode = false;
+int figureNumber = 0;
+
+POINT diffrentFigure[2];
+
+enum FIGURE { TRIANGLE, FILL_TRIANGLE, CIRCLE, SQUARE };
+FIGURE figure = SQUARE;
+
+RECT figures[4];
+float rotateFigures[4];
+
+struct Colours {
+	RECT rect;
+	COLORREF color;
+};
+
+struct Container {
+	float x, y;
+	float sizeX, sizeY;
+	float rotate;
+	COLORREF color;
+	FIGURE figure;
+};
+
+Colours colours[COLOURS];
+deque<Container> posContainer;
+
+void initDrawPanelRect() {
+	const float x = SCREEN_WIDTH * 0.7f;
+
+	RECT windowRect;
+	GetClientRect(hwnd, &windowRect);
+
+	drawPanelRect.left = SCREEN_WIDTH * 0.7f;
+	drawPanelRect.top = -1;
+	drawPanelRect.right = windowRect.right;
+	drawPanelRect.bottom = windowRect.bottom + 2;
+}
+
+void initFigures() {
+	for (unsigned int i = 0; i < 4; i++) {
+		figures[i].left = colours[20 + i].rect.left;
+		figures[i].top = colours[23].rect.top + SQUARE_SIZE + 20;
+		figures[i].right = colours[20 + i].rect.right;
+		figures[i].bottom = colours[23].rect.bottom + SQUARE_SIZE + 20;
+	}
+}
+
+void initColours() {
+	int y = 10;
+	int count = 0;
+
+	for (unsigned int i = 0; i < COLOURS; i++) {
+		int x = ((5 + SQUARE_SIZE) * count) + drawPanelRect.left + 5;
+
+		colours[i].rect.left = x;
+		colours[i].rect.top = y;
+		colours[i].rect.right = x + SQUARE_SIZE;
+		colours[i].rect.bottom = y + SQUARE_SIZE;
+
+		count++;
+
+		if (count % 4 == 0) {
+			count = 0;
+			y += (SQUARE_SIZE + 5);
+		}
+	}
+
+	colours[0].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[1].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[2].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[3].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[4].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[5].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[6].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[7].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[8].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[9].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[10].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[11].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[12].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[13].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[14].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[15].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[16].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[17].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[18].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[19].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[20].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[21].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[22].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+	colours[23].color = RGB(rand() % 255, rand() % 255, rand() % 255);
+}
+
+bool checkCollision(RECT rect, LPARAM lParam) {
+	float mouseX = LOWORD(lParam);
+	float mouseY = HIWORD(lParam);
+
+	if (mouseX > rect.left - SQUARE_SIZE && mouseX < rect.right && mouseY < rect.bottom && mouseY > rect.top)
+		return true;
+
+	return false;
+}
+
+void drawTriangle(const HDC hdc, const float x, const float y, const float sizeX, const float sizeY, const float rotate) {
+	const float rad = (float)rotate / (360.0f / (2 * 3.1416f));
+
+	const float xPos = x + (sizeX / 2);
+	const float yPos = y + (sizeY / 2);
+
+	POINT angle[3];
+
+	angle[0].x = cos(rad) * (x - xPos) - sin(rad) * (y - yPos) + xPos;
+	angle[0].y = sin(rad) * (x - xPos) + cos(rad) * (y - yPos) + yPos;
+
+	angle[1].x = cos(rad) * ((x - xPos) + sizeX) - sin(rad) * (y - yPos) + xPos;
+	angle[1].y = sin(rad) * ((x - xPos) + sizeX) + cos(rad) * (y - yPos) + yPos;
+
+	angle[2].x = cos(rad) * ((x - xPos) + (sizeX / 2)) - sin(rad) * ((y - yPos) + sizeY) + xPos;
+	angle[2].y = sin(rad) * ((x - xPos) + (sizeX / 2)) + cos(rad) * ((y - yPos) + sizeY) + yPos;
+
+	Polygon(hdc, angle, 3);
+}
+
+void drawRectangle(const HDC hdc, const float x, const float y, const float sizeX, const float sizeY, const float rotate) {
+	const float rad = (float)rotate / (360.0f / (2 * 3.1416f));
+
+	const float xPos = x + (sizeX / 2);
+	const float yPos = y + (sizeY / 2);
+
+	POINT angle[4];
+
+	angle[0].x = cos(rad) * (x - xPos) - sin(rad) * (y - yPos) + xPos;
+	angle[0].y = sin(rad) * (x - xPos) + cos(rad) * (y - yPos) + yPos;
+
+	angle[1].x = cos(rad) * ((x - xPos) + sizeX) - sin(rad) * (y - yPos) + xPos;
+	angle[1].y = sin(rad) * ((x - xPos) + sizeX) + cos(rad) * (y - yPos) + yPos;
+
+	angle[2].x = cos(rad) * ((x - xPos) + sizeX) - sin(rad) * ((y - yPos) + sizeY) + xPos;
+	angle[2].y = sin(rad) * ((x - xPos) + sizeX) + cos(rad) * ((y - yPos) + sizeY) + yPos;
+
+	angle[3].x = cos(rad) * (x - xPos) - sin(rad) * ((y - yPos) + sizeY) + xPos;
+	angle[3].y = sin(rad) * (x - xPos) + cos(rad) * ((y - yPos) + sizeY) + yPos;
+
+	Polygon(hdc, angle, 4);
+}
+
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	PAINTSTRUCT ps;
+
+	switch (msg)
+	{
+	case WM_PAINT: {
+		HDC hdc = BeginPaint(hwnd, &ps);
+
+		HBRUSH pudelko, pedzel;
+
+		pedzel = CreateSolidBrush(RGB(128, 128, 128));
+		pudelko = (HBRUSH)SelectObject(hdc, pedzel);
+
+		Rectangle(hdc, drawPanelRect.left, drawPanelRect.top, drawPanelRect.right, drawPanelRect.bottom);
+
+		for (unsigned int i = 0; i < COLOURS; i++) {
+			pedzel = CreateSolidBrush(colours[i].color);
+			pudelko = (HBRUSH)SelectObject(hdc, pedzel);
+
+			Rectangle(hdc, colours[i].rect.left, colours[i].rect.top, colours[i].rect.right, colours[i].rect.bottom);
+			SelectObject(hdc, pudelko);
+		}
+
+		for (unsigned int i = 0; i < 4; i++) {
+			pedzel = CreateSolidBrush(RGB(255, 255, 255));
+			pudelko = (HBRUSH)SelectObject(hdc, pedzel);
+
+			Rectangle(hdc, figures[i].left, figures[i].top, figures[i].right, figures[i].bottom);
+			SelectObject(hdc, pudelko);
+		}
+
+		pedzel = CreateSolidBrush(RGB(0, 0, 0));
+		pudelko = (HBRUSH)SelectObject(hdc, pedzel);
+
+		drawTriangle(hdc, figures[0].left + 10, figures[0].top + 10, 30, 30, 0);
+		SelectObject(hdc, pudelko);
+
+		pedzel = CreateSolidBrush(RGB(255, 255, 255));
+		pudelko = (HBRUSH)SelectObject(hdc, pedzel);
+
+		drawTriangle(hdc, figures[1].left + 10, figures[1].top + 10, 30, 30, 0);
+		SelectObject(hdc, pudelko);
+
+		pedzel = CreateSolidBrush(RGB(0, 0, 0));
+		pudelko = (HBRUSH)SelectObject(hdc, pedzel);
+		Ellipse(hdc, figures[2].left + 10, figures[2].top + 10, figures[2].left + 40, figures[2].top + 40);
+		SelectObject(hdc, pudelko);
+
+		Rectangle(hdc, figures[3].left + 10, figures[3].top + 10, figures[3].left + 40, figures[3].top + 40);
+
+		DeleteObject(pudelko);
+		DeleteObject(pedzel);
+
+		if (posContainer.size() > 0)
+			for (unsigned int i = 0; i < posContainer.size(); i++) {
+				HPEN box, pen;
+
+				pedzel = CreateSolidBrush(posContainer[i].color);
+				pen = CreatePen(PS_SOLID, 1, posContainer[i].color);
+
+				pudelko = (HBRUSH)SelectObject(hdc, pedzel);
+				box = (HPEN)SelectObject(hdc, pen);
+
+				switch (posContainer[i].figure)
+				{
+				case TRIANGLE: {
+					pedzel = CreateSolidBrush(RGB(255, 255, 255));
+					pudelko = (HBRUSH)SelectObject(hdc, pedzel);
+
+					drawTriangle(hdc, posContainer[i].x, posContainer[i].y, posContainer[i].sizeX, posContainer[i].sizeY, posContainer[i].rotate);
+				}break;
+
+				case FILL_TRIANGLE: {
+					drawTriangle(hdc, posContainer[i].x, posContainer[i].y, posContainer[i].sizeX, posContainer[i].sizeY, posContainer[i].rotate);
+				}break;
+
+				case CIRCLE:
+					Ellipse(hdc, posContainer[i].x, posContainer[i].y, posContainer[i].x + posContainer[i].sizeX, posContainer[i].y + posContainer[i].sizeY);
+					break;
+
+				case SQUARE:
+					drawRectangle(hdc, posContainer[i].x, posContainer[i].y, posContainer[i].sizeX, posContainer[i].sizeY, posContainer[i].rotate);
+					break;
+				}
+
+				SelectObject(hdc, box);
+				SelectObject(hdc, pudelko);
+
+				DeleteObject(box);
+				DeleteObject(pudelko);
+				DeleteObject(pedzel);
+				DeleteObject(pen);
+			}
+
+		EndPaint(hwnd, &ps);
+	}break;
+
+	case WM_MOUSEMOVE:
+		if (!checkCollision(drawPanelRect, lParam)) {
+			bool isRotate = false;
+
+			if (paintingLeft && !freeMode && posContainer.size() < FIGURES_LIMIT) {
+				for (int i = 0; i < posContainer.size(); i++) {
+					RECT rect;
+					rect.left = posContainer[i].x;
+					rect.top = posContainer[i].y;
+					rect.right = posContainer[i].x + posContainer[i].sizeX;
+					rect.bottom = posContainer[i].y + posContainer[i].sizeY;
+
+					if (checkCollision(rect, lParam)) {
+						posContainer[i].rotate += ANGLE;
+						if (posContainer[i].rotate >= 360.0f)
+							posContainer[i].rotate = posContainer[i].rotate - 360.0f;
+
+						isRotate = true;
+
+						InvalidateRect(hwnd, NULL, 1);
+					}
+				}
+			}
+
+			if (paintingLeft && !freeMode && posContainer.size() < FIGURES_LIMIT - 1 && !isRotate) {
+				Container container;
+				container.color = color;
+				container.figure = figure;
+				container.x = LOWORD(lParam);
+				container.y = HIWORD(lParam);
+				container.sizeX = SQUARE_SIZE;
+				container.sizeY = SQUARE_SIZE;
+				container.rotate = 0;
+
+				posContainer.push_back(container);
+
+				InvalidateRect(hwnd, NULL, 1);
+			}
+
+			if (paintingRight && posContainer.size() < FIGURES_LIMIT) {
+				for (int i = 0; i < posContainer.size(); i++) {
+					RECT rect;
+					rect.left = posContainer[i].x;
+					rect.top = posContainer[i].y;
+					rect.right = posContainer[i].x + posContainer[i].sizeX;
+					rect.bottom = posContainer[i].y + posContainer[i].sizeY;
+
+					if (checkCollision(rect, lParam)) {
+						posContainer.erase(posContainer.begin() + i);
+						InvalidateRect(hwnd, NULL, 1);
+						i = 0;
+					}
+				}
+			}
+		}
+		else {
+			if (paintingLeft) {
+				for (int i = 0; i < COLOURS; i++)
+					if (checkCollision(colours[i].rect, lParam)) {
+						color = colours[i].color;
+
+						break;
+					}
+
+				for (int i = 0; i < 4; i++)
+					if (checkCollision(figures[i], lParam)) {
+						switch (i) {
+						case 0:
+							figure = FILL_TRIANGLE;
+							break;
+
+						case 1:
+							figure = TRIANGLE;
+							break;
+
+						case 2:
+							figure = CIRCLE;
+							break;
+
+						case 3:
+							figure = SQUARE;
+							break;
+						}
+
+						break;
+					}
+			}
+		}
+		break;
+
+	case WM_LBUTTONDOWN: {
+		paintingLeft = true;
+
+		if (freeMode) {
+			diffrentFigure[figureNumber].x = LOWORD(lParam);
+			diffrentFigure[figureNumber].y = HIWORD(lParam);
+
+			if (figureNumber < 1)
+				figureNumber++;
+			else {
+				figureNumber = 0;
+				freeMode = false;
+
+				Container container;
+				container.color = color;
+				container.figure = figure;
+				container.x = diffrentFigure[0].x;
+				container.y = diffrentFigure[0].y;
+				container.sizeX = (diffrentFigure[1].x - diffrentFigure[0].x);
+				container.sizeY = (diffrentFigure[1].y - diffrentFigure[0].y);
+				container.rotate = 0;
+
+				posContainer.push_back(container);
+
+				InvalidateRect(hwnd, NULL, 1);
+			}
+		}
+
+		SendMessage(hwnd, WM_MOUSEMOVE, wParam, lParam);
+	}break;
+
+	case WM_LBUTTONUP:
+		paintingLeft = false;
+		break;
+
+	case WM_RBUTTONDOWN: {
+		paintingRight = true;
+
+		SendMessage(hwnd, WM_MOUSEMOVE, wParam, lParam);
+	}break;
+
+	case WM_RBUTTONUP:
+		paintingRight = false;
+		break;
+
+	case WM_KEYDOWN:
+		switch ((int)wParam)
+		{
+		case 0x43:
+			posContainer.clear();
+			InvalidateRect(hwnd, NULL, 1);
+			break;
+
+		case VK_F1:
+			freeMode = !freeMode;
+			break;
+		}
+		break;
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	case WM_CLOSE:
+		DestroyWindow(hwnd);
+		break;
+
+	default:
+		return DefWindowProc(hwnd, msg, wParam, lParam);
+	}
+
+	return 0;
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	WNDCLASSEX wc;
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = hInstance;
+	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wc.lpfnWndProc = WndProc;
+	wc.lpszClassName = className;
+	wc.lpszMenuName = NULL;
+	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+
+	if (!RegisterClassEx(&wc))
+	{
+		MessageBox(NULL, TEXT("Nie uda³o siê zarejestrowaæ klasy okna!"), TEXT("B³¹d"), MB_OK | MB_ICONERROR);
+		return 1;
+	}
+
+	hwnd = CreateWindowEx(0, className, TEXT("TU RYSUJ XD"), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT, SCREEN_WIDTH, SCREEN_HEIGHT, NULL, NULL, hInstance, NULL);
+	if (hwnd == NULL) {
+		MessageBox(NULL, TEXT("Nie uda³o siê utworzyæ okna 1!"), TEXT("CreateWindowEx"), MB_OK | MB_ICONERROR);
+		return 1;
+	}
+
+	initDrawPanelRect();
+	initColours();
+	initFigures();
+
+	ShowWindow(hwnd, nCmdShow);
+	UpdateWindow(hwnd);
+
+	while (GetMessage(&msg, NULL, 0, 0))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	UnregisterClass(className, hInstance);
+
+	return msg.wParam;
+}
+
+////////////////////////////////////////////////////PASZKWIL
 
 
 
