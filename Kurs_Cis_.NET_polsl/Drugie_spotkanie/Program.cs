@@ -12,7 +12,7 @@ namespace Drugie_spotkanie
         {
 
             Ssak[] SsakArray = new Ssak[1];
-
+            SsakArray[]
 
             Console.ReadKey();
             

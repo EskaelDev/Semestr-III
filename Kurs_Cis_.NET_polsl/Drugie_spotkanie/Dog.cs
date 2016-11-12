@@ -12,5 +12,10 @@ namespace Drugie_spotkanie
         {
 
         }
+
+        public override void Name()
+        {
+            //Console.WriteLine(objectS)
+        }
     }
 }

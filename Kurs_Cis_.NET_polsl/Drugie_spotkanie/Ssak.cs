@@ -6,21 +6,19 @@ using System.Threading.Tasks;
 
 namespace Drugie_spotkanie
 {
-    class Ssak
+   abstract class Ssak : ISsak
     {
         public int age;
         protected string FirstName;
 
         private string LastName;
-        public virtual void Name()
-        {
-            Console.WriteLine("Jestem ssakiem");
-        }
+        public abstract void Name();
+
         public Ssak(string FirstName, string LastName)
         {
             this.FirstName = FirstName;
-            this.LastName = LastName;    
-                }
+            this.LastName = LastName;
+        }
 
         public override string ToString()
         {
