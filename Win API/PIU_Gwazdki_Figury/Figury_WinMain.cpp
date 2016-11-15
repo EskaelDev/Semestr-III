@@ -1,4 +1,4 @@
-#include <windows.h>
+ï»¿#include <windows.h>
 
 TCHAR NazwaAplikacji[] = TEXT("Aplikacja studencka");
 TCHAR NazwaKlasy[] = TEXT("OKNOGLOWNE");
@@ -205,7 +205,7 @@ int WINAPI WinMain(HINSTANCE Instancja, HINSTANCE Poprzednia, LPSTR Parametry, i
 			NazwaAplikacji, MB_ICONSTOP | MB_OK);
 		return 1;
 	}
-	// Stwórz g?ówne okno. Równie? protestuj, je?eli wyst?pi? b??d.
+	// StwÃ³rz g?Ã³wne okno. RÃ³wnie? protestuj, je?eli wyst?pi? b??d.
 
 
 	HWND GlowneOkno = CreateWindowEx(WS_EX_APPWINDOW | WS_EX_CLIENTEDGE,
@@ -213,14 +213,14 @@ int WINAPI WinMain(HINSTANCE Instancja, HINSTANCE Poprzednia, LPSTR Parametry, i
 		CW_USEDEFAULT, CW_USEDEFAULT, 600, 500,
 		NULL, NULL, Instancja, NULL);
 	if (GlowneOkno == NULL) {
-		MessageBox(NULL, TEXT("Nie uda?o si? stworzy? g?ównego okna!"),
+		MessageBox(NULL, TEXT("Nie uda?o si? stworzy? g?Ã³wnego okna!"),
 			NazwaAplikacji, MB_ICONSTOP | MB_OK);
 		return 2;
 	}
 	// Wy?wietl i uaktualnij nowo stworzone okno.
 	ShowWindow(GlowneOkno, Widocznosc);
 	UpdateWindow(GlowneOkno);
-	// G?ówna p?tla komunikatów w?tku.
+	// G?Ã³wna p?tla komunikatÃ³w w?tku.
 	MSG Komunikat;
 	while (GetMessage(&Komunikat, NULL, 0, 0) > 0) {
 		TranslateMessage(&Komunikat);

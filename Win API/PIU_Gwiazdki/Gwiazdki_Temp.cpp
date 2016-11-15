@@ -1,230 +1,221 @@
-﻿#include <Windows.h>
-#include <deque>
+﻿/************************************************************
+* -- NIE USUWAJ TEJ INFORMACJI Z PROGRAMU ---------------- *
+************************************************************
+* -- Program powsta³ na bazie kodu Ÿród³owego ------------ *
+* -- udostêpnionego studentom na potrzeby przedmiotu ----- *
+* -- Programowanie Interfejsu U¿ytkownika ---------------- *
+* -- Copyright (c) 2009 Politechnika Œl¹ska w Gliwicach -- *
+* -- Rados³aw Sokó³, Wydzia³ Elektryczny ----------------- *
+************************************************************/
 
-#define ID_TIMER 1
+#include <windows.h>
+#include <list>
+#include <stdio.h>
 
-using namespace std;
-
-TCHAR className[] = TEXT("Class name");
-TCHAR appName[] = TEXT("Falling stars");
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-class Star
+TCHAR NazwaAplikacji[] = TEXT("Aplikacja studencka");
+TCHAR NazwaKlasy[] = TEXT("OKNOGLOWNE");
+// ###################################
+// ##### Klasa 'Slupki' ##############
+// ###################################
+class Slupki
 {
 private:
-	RECT field;
-	bool ground;
+	int dlugosc,
+		polozenie,
+		wielkosc,
+		id;
+	static int	skala,
+		ilosc;
+	bool zaznaczone;
 public:
-	Star(int, int, int);
-	void draw(HDC);
-	void move();
-	void setGround(bool _ground)
-	{
-		ground = _ground;
-	};
-	const RECT getField()
-	{
-		return field;
-	};
-	const bool getGround()
-	{
-		return ground;
-	};
+	Slupki(RECT Rect);
+	~Slupki() { --ilosc; };
+	void Maluj(HDC Kontekst);
+	void Polozenie(RECT &Rect);
+	void CzyKliknieto(int x, int y);
+	RECT Przesun(int x, RECT Rect);
 
-	bool checkCollision(Star container2)
-	{
-		RECT rect2;
-		rect2.left = container2.getField().left;
-		rect2.top = container2.getField().top;
-		rect2.right = container2.getField().right;
-		rect2.bottom = container2.getField().bottom;
-
-		if (field.left >= rect2.right)
-			return false;
-
-		if (field.right <= rect2.left)
-			return false;
-
-		if (field.top >= rect2.bottom)
-			return false;
-
-		if (field.bottom <= rect2.top)
-			return false;
-
-		return true;
-	}
-
+	void Odznacz() { zaznaczone = false; };
+	bool CzyZaznaczone() { return zaznaczone; };
 };
-
-Star::Star(int left, int top, int size)
+// ##### Definicja zmiennych statycznych #####
+int Slupki::ilosc;
+int Slupki::skala;
+// ##### Konstruktor parametryczny #####
+Slupki::Slupki(RECT Rect)
 {
-	field.left = left;
-	field.right = left + size;
-	field.top = top;
-	field.bottom = top + size;
-	ground = false;
+	ilosc++;
+	id = ilosc;
+	dlugosc = 50;
+	zaznaczone = false;
+	Polozenie(Rect);
 }
-
-void Star::draw(HDC hdc)
+// ##### Prosta funkcja odpowiedzialna za rysowanie #####
+void Slupki::Maluj(HDC Kontekst)
 {
-	Ellipse(hdc, field.left, field.top, field.right, field.bottom);
+	HBRUSH	Pedzel = CreateSolidBrush(0xFF8010),
+		Pedzel2 = CreateSolidBrush(0xFF1010),
+		Stary;
+	Stary = (HBRUSH)SelectObject(Kontekst, Pedzel);
+	TCHAR Buf[4];
+	swprintf(Buf, L"%i", dlugosc);
+	TextOut(Kontekst, wielkosc + 15, polozenie, Buf, wcslen(Buf));
+	Rectangle(Kontekst, 10, polozenie - skala, wielkosc, polozenie + skala); // Rysuje slupek
+	SelectObject(Kontekst, Pedzel2);
+	Rectangle(Kontekst, wielkosc - 10, polozenie - skala - 2, wielkosc + 10, polozenie + skala + 2); // Rysuje wyszczególniony obszar
+	SelectObject(Kontekst, Stary);
+	DeleteObject(Pedzel);
 }
-
-void Star::move()
+// ##### Funkcja ustawia grubosc slupka, jego wielkosc(dlugosc) oraz polozenie konkretnego slupka #####
+void Slupki::Polozenie(RECT &Rect)
 {
-	if (!ground)
-	{
-		int xMove = rand() % 15 + (-7),
-			yMove = rand() % 10;
-		field.left += xMove;
-		field.right += xMove;
-		field.top += yMove;
-		field.bottom += yMove;
-	}
+	wielkosc = Rect.right / 105 * dlugosc + 15;
+	skala = Rect.bottom / ilosc / 3.6;
+	polozenie = Rect.bottom / (ilosc + 1) * id;
 }
-
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR ilCmdLine, int nCmdShow)
+// ##### Funkcja odpowiedzialna za ustawienie dlugosc slupka za pomoca myszki #####
+RECT Slupki::Przesun(int x, RECT Rect)
 {
-	WNDCLASSEX wC = { 0 };
-	HWND hwnd = NULL;
-	MSG msg;
-
-	wC.cbSize = sizeof(WNDCLASSEX);
-	wC.style = CS_VREDRAW | CS_HREDRAW;
-	wC.cbClsExtra = NULL;
-	wC.cbWndExtra = NULL;
-	wC.hInstance = hInstance;
-	wC.hbrBackground = (HBRUSH)CreateSolidBrush(RGB(0, 0, 200));
-	wC.lpfnWndProc = WndProc;
-	wC.lpszClassName = className;
-	wC.lpszMenuName = 0;
-	wC.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wC.hIconSm = NULL;
-	wC.hCursor = LoadCursor(NULL, IDC_ARROW);
-
-	ATOM result = RegisterClassEx(&wC);
-	if (!result)
-	{
-		MessageBox(0, TEXT("B��d funkcji RegisterClassEx"), appName, MB_OK);
-	}
-
-	hwnd = CreateWindow(
-		className,
-		appName,
-		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-		100,
-		100,
-		800,
-		600,
-		NULL,
-		NULL,
-		hInstance,
-		NULL
-	);
-
-	if (hwnd = NULL)
-	{
-		if (result)
-		{
-			UnregisterClass(className, hInstance);
-			return -1;
-		}
-		return -1;
-	}
-
-	ShowWindow(hwnd, nCmdShow);
-	UpdateWindow(hwnd);
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-
-	if (result)
-	{
-		UnregisterClass(className, hInstance);
-	}
-	return msg.wParam;
+	if (x > 0 && x < Rect.right) dlugosc = x / (Rect.right / 105);
+	if (dlugosc >= 100) dlugosc = 100;
+	if (dlugosc <= 0) dlugosc = 0;
+	Rect.bottom = polozenie - skala - 5;
+	Rect.top = polozenie + skala + 5;
+	Rect.left = wielkosc - 30;
+	Rect.right = wielkosc + 40;
+	return Rect;
 }
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+// ##### Funkcja sprawdza czy kliknieto w obszar odpowiedzialny za przesuwanie #####
+void Slupki::CzyKliknieto(int x, int y)
 {
-	static deque<Star>container;
-	static deque<Star>container2;
-	PAINTSTRUCT ps;
-	HDC hdc;
-	RECT clientRect;
-
-	switch (msg)
-	{
+	if (x > wielkosc - 10 && y > polozenie - skala - 2 && x < wielkosc + 10 && y < polozenie + skala + 2) zaznaczone = true;
+	else zaznaczone = false;
+}
+// ##### Funkcja od komunikatow  #####
+static LRESULT CALLBACK FunkcjaOkienkowa(HWND Okno, UINT Komunikat, WPARAM wParam, LPARAM lParam)
+{
+	static std::list<Slupki> Pamiec;
+	Slupki *dodaj;
+	RECT Rect;
+	PAINTSTRUCT PS;
+	GetClientRect(Okno, &Rect);
+	switch (Komunikat) {
 	case WM_CREATE:
-		SetTimer(hwnd, ID_TIMER, 100, 0);
-		HPEN pen;
-		HBRUSH brush;
-		brush = CreateSolidBrush(RGB(255, 255, 255));
-		pen = CreatePen(PS_SOLID, 2, RGB(255, 255, 255));
-		
+		dodaj = new Slupki(Rect);
+		Pamiec.push_back(*dodaj);
+		CreateWindowEx(0, L"BUTTON", L"Dodaj", WS_CHILD + WS_VISIBLE, 10, 10, 50, 20, Okno, (HMENU)1, GetModuleHandle(0), 0);
+		CreateWindowEx(0, L"BUTTON", L"Usuñ", WS_CHILD + WS_VISIBLE, 65, 10, 50, 20, Okno, (HMENU)2, GetModuleHandle(0), 0);
 		break;
-
-	case WM_PAINT:
-		hdc = BeginPaint(hwnd, &ps);
-		SelectObject(hdc, pen);
-		SelectObject(hdc, brush);
-		for (deque<Star>::iterator it = container.begin(); it != container.end(); ++it)
-			it->draw(hdc);
-
-		for (deque<Star>::iterator it = container2.begin(); it != container2.end(); ++it)
-			it->draw(hdc);
-
-		EndPaint(hwnd, &ps);
-		break;
-
-	case WM_TIMER:
-	{
-		GetClientRect(hwnd, &clientRect);
-		Star s(rand() % clientRect.right, rand() % clientRect.bottom * 3 / 4, rand() % 20);
-		container.push_back(s);
-		for (deque<Star>::iterator it = container.begin(); it != container.end(); ++it)
+	case WM_COMMAND:
+		switch (wParam)
 		{
-			if (it->getField().bottom < clientRect.bottom && it->getGround() == false)
+		case 1:
+			dodaj = new Slupki(Rect);
+			Pamiec.push_back(*dodaj);
+			break;
+		case 2:
+			if (!Pamiec.empty()) Pamiec.pop_back();
+			break;
+		}
+		InvalidateRect(Okno, 0, 1);
+		break;
+	case WM_PAINT:
+		BeginPaint(Okno, &PS);
+		for (std::list<Slupki>::iterator it = Pamiec.begin(); it != Pamiec.end(); ++it)
+		{
+			it->Polozenie(Rect);
+			it->Maluj(PS.hdc);
+		}
+		EndPaint(Okno, &PS);
+		break;
+	case WM_SIZE:
+		InvalidateRect(Okno, 0, 1);
+		break;
+	case WM_LBUTTONDOWN:
+		SetCapture(Okno);
+		for (std::list<Slupki>::iterator it = Pamiec.begin(); it != Pamiec.end(); ++it)
+		{
+			it->CzyKliknieto(LOWORD(lParam), HIWORD(lParam));
+		}
+		break;
+	case WM_LBUTTONUP:
+		for (std::list<Slupki>::iterator it = Pamiec.begin(); it != Pamiec.end(); ++it)
+		{
+			it->Odznacz();
+		}
+		ReleaseCapture();
+		break;
+	case WM_MOUSEMOVE:
+		for (std::list<Slupki>::iterator it = Pamiec.begin(); it != Pamiec.end(); ++it)
+		{
+			if (it->CzyZaznaczone())
 			{
-				it->move();
-			}
-			else
-			{
-				container2.push_back(*it);
-				container.erase(it);
+				Rect = it->Przesun(LOWORD(lParam) - 10, Rect);
+				InvalidateRect(Okno, &Rect, 1);
 				break;
 			}
 		}
-		if (container.size() > 0 && container2.size() > 0)
-			for (deque<Star>::iterator it = container.begin(); it != container.end(); ++it)
-				for (deque<Star>::iterator it2 = container2.begin(); it2 != container2.end(); ++it2)
-					if (it->checkCollision(*it2))
-					{
-						it->setGround(true);
-						break;
-					}
-		InvalidateRect(hwnd, NULL, true);
-	}
-	break;
-
-	case WM_SIZE:
-		GetClientRect(hwnd, &clientRect);
 		break;
-
-	case WM_CLOSE:
-		if (MessageBox(0, TEXT("Czy na pewno chcesz zako�czy� dzia�anie aplikacji?"), appName, MB_YESNO) == IDYES)
-			DestroyWindow(hwnd);
-		break;
-
 	case WM_DESTROY:
-		DeleteObject(pen);
-		DeleteObject(brush);
 		PostQuitMessage(0);
 		break;
-
 	default:
-		return DefWindowProc(hwnd, msg, wParam, lParam);
+		return DefWindowProc(Okno, Komunikat, wParam, lParam);
 	}
+	return 0;
 }
+
+static bool RejestrujKlasy()
+{
+	WNDCLASSEX wc;
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.cbClsExtra = wc.cbWndExtra = 0;
+	wc.hbrBackground = (HBRUSH)CreateSolidBrush(0xFFFFFF);
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hInstance = GetModuleHandle(NULL);
+	wc.lpfnWndProc = &FunkcjaOkienkowa;
+	wc.lpszClassName = NazwaKlasy;
+	wc.lpszMenuName = NULL;
+	wc.style = 0;
+	return (RegisterClassEx(&wc) != 0);
+}
+
+static void WyrejestrujKlasy()
+{
+	UnregisterClass(NazwaKlasy, GetModuleHandle(NULL));
+}
+
+int WINAPI WinMain(HINSTANCE Instancja, HINSTANCE Poprzednia, LPSTR Parametry, int Widocznosc)
+{
+	// Zarejestruj klasê. Protestuj, je¿eli wyst¹pi³ b³¹d.
+	if (!RejestrujKlasy()) {
+		MessageBox(NULL, TEXT("Nie uda³o siê zarejestrowaæ klasy okna!"),
+			NazwaAplikacji, MB_ICONSTOP | MB_OK);
+		return 1;
+	}
+	// Stwórz g³ówne okno. Równie¿ protestuj, je¿eli wyst¹pi³ b³¹d.
+	HWND GlowneOkno = CreateWindowEx(WS_EX_APPWINDOW | WS_EX_CLIENTEDGE,
+		NazwaKlasy, TEXT("Okno"), WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		NULL, NULL, Instancja, NULL);
+	if (GlowneOkno == NULL) {
+		MessageBox(NULL, TEXT("Nie uda³o siê stworzyæ g³ównego okna!"),
+			NazwaAplikacji, MB_ICONSTOP | MB_OK);
+		return 2;
+	}
+	// Wyœwietl i uaktualnij nowo stworzone okno.
+	ShowWindow(GlowneOkno, Widocznosc);
+	UpdateWindow(GlowneOkno);
+	// G³ówna pêtla komunikatów w¹tku.
+	MSG Komunikat;
+	while (GetMessage(&Komunikat, NULL, 0, 0) > 0) {
+		TranslateMessage(&Komunikat);
+		DispatchMessage(&Komunikat);
+	}
+	// Zwolnij pamiêæ klas i zakoñcz proces.
+	WyrejestrujKlasy();
+	return static_cast<int>(Komunikat.wParam);
+}
+
