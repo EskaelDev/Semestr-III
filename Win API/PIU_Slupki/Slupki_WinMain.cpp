@@ -1,18 +1,16 @@
 ﻿/************************************************************
 * -- NIE USUWAJ TEJ INFORMACJI Z PROGRAMU ---------------- *
 ************************************************************
-* -- Program powsta³ na bazie kodu Ÿród³owego ------------ *
-* -- udostêpnionego studentom na potrzeby przedmiotu ----- *
-* -- Programowanie Interfejsu U¿ytkownika ---------------- *
-* -- Copyright (c) 2009 Politechnika Œl¹ska w Gliwicach -- *
-* -- Rados³aw Sokó³, Wydzia³ Elektryczny ----------------- *
+* -- Program powsta� na bazie kodu �r�d�owego ------------ *
+* -- udost�pnionego studentom na potrzeby przedmiotu ----- *
+* -- Programowanie Interfejsu U�ytkownika ---------------- *
+* -- Copyright (c) 2009 Politechnika �l�ska w Gliwicach -- *
+* -- Rados�aw Sok�, Wydzia� Elektryczny ----------------- *
 ************************************************************/
 
 #include <windows.h>
 #include <list>
 #include <stdio.h>
-
-
 
 TCHAR NazwaAplikacji[] = TEXT("Aplikacja studencka");
 TCHAR NazwaKlasy[] = TEXT("OKNOGLOWNE");
@@ -55,18 +53,12 @@ Slupki::Slupki(RECT Rect)
 // ##### Prosta funkcja odpowiedzialna za rysowanie #####
 void Slupki::Maluj(HDC Kontekst)
 {
-	HBRUSH	Pedzel = CreateSolidBrush(0xFF8010),
-		Pedzel2 = CreateSolidBrush(0xFF1010),
-		Stary;
-	Stary = (HBRUSH)SelectObject(Kontekst, Pedzel);
 	TCHAR Buf[4];
 	swprintf(Buf, L"%i", dlugosc);
 	TextOut(Kontekst, wielkosc + 15, polozenie, Buf, wcslen(Buf));
 	Rectangle(Kontekst, 10, polozenie - skala, wielkosc, polozenie + skala); // Rysuje slupek
-	SelectObject(Kontekst, Pedzel2);
-	Rectangle(Kontekst, wielkosc - 10, polozenie - skala - 2, wielkosc + 10, polozenie + skala + 2); // Rysuje wyszczególniony obszar
-	SelectObject(Kontekst, Stary);
-	DeleteObject(Pedzel);
+	Rectangle(Kontekst, wielkosc - 10, polozenie - skala - 2, wielkosc + 10, polozenie + skala + 2); // Rysuje wyszczeg�lniony obszar
+
 }
 // ##### Funkcja ustawia grubosc slupka, jego wielkosc(dlugosc) oraz polozenie konkretnego slupka #####
 void Slupki::Polozenie(RECT &Rect)
@@ -100,13 +92,15 @@ static LRESULT CALLBACK FunkcjaOkienkowa(HWND Okno, UINT Komunikat, WPARAM wPara
 	Slupki *dodaj;
 	RECT Rect;
 	PAINTSTRUCT PS;
+	HDC hdc;
 	GetClientRect(Okno, &Rect);
 	switch (Komunikat) {
 	case WM_CREATE:
 		dodaj = new Slupki(Rect);
 		Pamiec.push_back(*dodaj);
 		CreateWindowEx(0, L"BUTTON", L"Dodaj", WS_CHILD + WS_VISIBLE, 10, 10, 50, 20, Okno, (HMENU)1, GetModuleHandle(0), 0);
-		CreateWindowEx(0, L"BUTTON", L"Usuñ", WS_CHILD + WS_VISIBLE, 65, 10, 50, 20, Okno, (HMENU)2, GetModuleHandle(0), 0);
+		CreateWindowEx(0, L"BUTTON", L"Usu�", WS_CHILD + WS_VISIBLE, 65, 10, 50, 20, Okno, (HMENU)2, GetModuleHandle(0), 0);
+		HBRUSH	Pedzel, Pedzel2, Stary;
 		break;
 	case WM_COMMAND:
 		switch (wParam)
@@ -122,11 +116,18 @@ static LRESULT CALLBACK FunkcjaOkienkowa(HWND Okno, UINT Komunikat, WPARAM wPara
 		InvalidateRect(Okno, 0, 1);
 		break;
 	case WM_PAINT:
-		BeginPaint(Okno, &PS);
+		hdc = BeginPaint(Okno, &PS);
 		for (std::list<Slupki>::iterator it = Pamiec.begin(); it != Pamiec.end(); ++it)
 		{
+
+			Pedzel = CreateSolidBrush(0xFF8010);
+			Pedzel2 = CreateSolidBrush(0xFF1010);
+			Stary = (HBRUSH)SelectObject(hdc, Pedzel);
 			it->Polozenie(Rect);
 			it->Maluj(PS.hdc);
+			DeleteObject(Pedzel);
+			DeleteObject(Pedzel2);
+			DeleteObject(Stary);
 		}
 		EndPaint(Okno, &PS);
 		break;
@@ -159,6 +160,7 @@ static LRESULT CALLBACK FunkcjaOkienkowa(HWND Okno, UINT Komunikat, WPARAM wPara
 		}
 		break;
 	case WM_DESTROY:
+		DeleteObject(Pedzel);
 		PostQuitMessage(0);
 		break;
 	default:
@@ -191,33 +193,32 @@ static void WyrejestrujKlasy()
 
 int WINAPI WinMain(HINSTANCE Instancja, HINSTANCE Poprzednia, LPSTR Parametry, int Widocznosc)
 {
-	// Zarejestruj klasê. Protestuj, je¿eli wyst¹pi³ b³¹d.
+	// Zarejestruj klas�. Protestuj, je�eli wyst�pi� b��d.
 	if (!RejestrujKlasy()) {
-		MessageBox(NULL, TEXT("Nie uda³o siê zarejestrowaæ klasy okna!"),
+		MessageBox(NULL, TEXT("Nie uda�o si� zarejestrowa� klasy okna!"),
 			NazwaAplikacji, MB_ICONSTOP | MB_OK);
 		return 1;
 	}
-	// Stwórz g³ówne okno. Równie¿ protestuj, je¿eli wyst¹pi³ b³¹d.
+	// Stw�rz g��wne okno. R�wnie� protestuj, je�eli wyst�pi� b��d.
 	HWND GlowneOkno = CreateWindowEx(WS_EX_APPWINDOW | WS_EX_CLIENTEDGE,
 		NazwaKlasy, TEXT("Okno"), WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		NULL, NULL, Instancja, NULL);
 	if (GlowneOkno == NULL) {
-		MessageBox(NULL, TEXT("Nie uda³o siê stworzyæ g³ównego okna!"),
+		MessageBox(NULL, TEXT("Nie uda�o si� stworzy� g��wnego okna!"),
 			NazwaAplikacji, MB_ICONSTOP | MB_OK);
 		return 2;
 	}
-	// Wyœwietl i uaktualnij nowo stworzone okno.
+	// Wy�wietl i uaktualnij nowo stworzone okno.
 	ShowWindow(GlowneOkno, Widocznosc);
 	UpdateWindow(GlowneOkno);
-	// G³ówna pêtla komunikatów w¹tku.
+	// G��wna p�tla komunikat�w w�tku.
 	MSG Komunikat;
 	while (GetMessage(&Komunikat, NULL, 0, 0) > 0) {
 		TranslateMessage(&Komunikat);
 		DispatchMessage(&Komunikat);
 	}
-	// Zwolnij pamiêæ klas i zakoñcz proces.
+	// Zwolnij pami�� klas i zako�cz proces.
 	WyrejestrujKlasy();
 	return static_cast<int>(Komunikat.wParam);
 }
-
