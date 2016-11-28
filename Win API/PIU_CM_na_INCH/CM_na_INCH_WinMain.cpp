@@ -18,7 +18,7 @@ TCHAR NazwaAplikacji[] = TEXT("Aplikacja studencka");
 TCHAR NazwaKlasy[] = TEXT("OKNOGLOWNE");
 RECT rect;
 HFONT hNormalFont;
-HWND rButton1 = NULL, rButton2 = NULL, tField1 = NULL , tField2 = NULL;
+HWND rButton1 = NULL, rButton2 = NULL, tField1 = NULL, tField2 = NULL;
 bool CMtoINCH = false, INCHtoCM = FALSE;
 
 
@@ -46,7 +46,7 @@ static LRESULT CALLBACK FunkcjaOkienkowa(HWND Okno, UINT Komunikat, WPARAM wPara
 		MoveWindow(rButton1, xB, yB, W_RBUTTON, H_RBUTTON, true);
 		MoveWindow(rButton2, xB, yB + H_RBUTTON, W_RBUTTON, H_RBUTTON, true);
 		MoveWindow(tField1, xB, yB - H_RBUTTON, W_TFIELD, H_TFIELD, true);
-		MoveWindow(tField2, xB, yB + 2*H_RBUTTON, W_TFIELD, H_TFIELD, true);
+		MoveWindow(tField2, xB, yB + 2 * H_RBUTTON, W_TFIELD, H_TFIELD, true);
 
 	}
 	break;
@@ -58,12 +58,15 @@ static LRESULT CALLBACK FunkcjaOkienkowa(HWND Okno, UINT Komunikat, WPARAM wPara
 		{
 			CMtoINCH = true;
 			INCHtoCM = false;
+			CheckRadioButton(Okno, ID_RBUTTON1, ID_RBUTTON2, ID_RBUTTON1);
 		}
 		break;
 		case ID_RBUTTON2:
 		{
 			CMtoINCH = false;
 			INCHtoCM = true;
+			CheckRadioButton(Okno, ID_RBUTTON1, ID_RBUTTON2, ID_RBUTTON2);
+
 		}
 		break;
 		}
@@ -89,6 +92,10 @@ static LRESULT CALLBACK FunkcjaOkienkowa(HWND Okno, UINT Komunikat, WPARAM wPara
 		ReleaseDC(Okno, hdc);*/
 	}
 	break;
+	case WM_GETMINMAXINFO:
+		((MINMAXINFO *)lParam)->ptMinTrackSize.x = 500;	// minimalna szerokość
+		((MINMAXINFO *)lParam)->ptMinTrackSize.y = 500;	// minimalna wysokość
+		break;
 	case WM_PAINT:
 	{
 
@@ -234,7 +241,7 @@ int WINAPI WinMain(HINSTANCE Instancja, HINSTANCE Poprzednia, LPSTR Parametry, i
 		TEXT("Wynik"),										// nazwa wyswietlana na przycisku
 		WS_CHILD | WS_VISIBLE,							// styl okna, kontrola potomna i widoczna
 		xB,												// poczatkowa pozycja x
-		yB - 2*H_RBUTTON,									// poczatkowa pozycja y
+		yB - 2 * H_RBUTTON,									// poczatkowa pozycja y
 		W_TFIELD,										// poczatkowa wielkosc x
 		H_TFIELD,										// poczatkowa wielkosc y
 		GlowneOkno,										// uchwyt okna nadrzednego
