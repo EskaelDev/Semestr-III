@@ -22,4 +22,55 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Cos_Wlasnego_Spadajace_Jajka.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Background.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Chicken.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="ChickenMask.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Basket.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="BasketMask.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Egg.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="EggMask.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="BasketMaskSmall.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="BasketSmall.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="ChickenMaskSmall.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="ChickenSmall.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="EggMaskSmall.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="EggSmall.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

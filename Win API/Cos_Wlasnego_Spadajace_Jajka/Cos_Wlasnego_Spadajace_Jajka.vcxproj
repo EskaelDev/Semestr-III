@@ -147,6 +147,27 @@
     </ClCompile>
     <ClCompile Include="Spadajace_Jajka_WinMain.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Cos_Wlasnego_Spadajace_Jajka.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Background.bmp" />
+    <Image Include="Basket.bmp" />
+    <Image Include="BasketMask.bmp" />
+    <Image Include="BasketMaskSmall.bmp" />
+    <Image Include="BasketSmall.bmp" />
+    <Image Include="Chicken.bmp" />
+    <Image Include="ChickenMask.bmp" />
+    <Image Include="ChickenMaskSmall.bmp" />
+    <Image Include="ChickenSmall.bmp" />
+    <Image Include="Egg.bmp" />
+    <Image Include="EggMask.bmp" />
+    <Image Include="EggMaskSmall.bmp" />
+    <Image Include="EggSmall.bmp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -154,8 +154,6 @@
     <ResourceCompile Include="PIU_Statek_Kosmiczny.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\cloud\mega\semestr iii\programowanie interfejsu użytkownika\lata wyższe\3 rok\winapi - grafiak rastrowa\winapi - grafiak rastrowa\bitmap2.bmp" />
-    <Image Include="..\..\..\..\Cloud\MEGA\Semestr III\Programowanie interfejsu użytkownika\Lata wyższe\3 rok\WinAPI - grafiak rastrowa\WinAPI - grafiak rastrowa\spacecraft.bmp" />
     <Image Include="shot.bmp" />
     <Image Include="shot2.bmp" />
     <Image Include="space.bmp" />
